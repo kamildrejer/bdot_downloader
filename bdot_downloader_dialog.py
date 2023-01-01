@@ -198,7 +198,7 @@ class BdotDowloaderDialog(QtWidgets.QDialog, FORM_CLASS):
             ['BUWT02','komin przemysłowy',False,],
             ['BUWT03','maszt oświetleniowy',False,],
             ['BUWT04','maszt telekomunikacyjny',False,],
-            ['BUWT05','turbina wiatrowa',False,],
+            ['BUWT05','turbina wiatrowa',True,],
             ['BUWT06','słup energetyczny',False,],
             ['BUWT07','podpora kolei linowej',False,],
             ['BUWT08','wieża ciśnień',False,],
@@ -350,9 +350,9 @@ class BdotDowloaderDialog(QtWidgets.QDialog, FORM_CLASS):
             ['0I0R12','wiatrak (niebędący budynkiem)',False,],
             ['0I0R13','wieża obserwacyjna',False,],
             ['0I0R14','wodowskaz',False,],
-            ['0IMK01','bagno',False,],
-            ['0IMK02','teren podmokły',False,],
-            ['0ISZ01','szuwary',False,],]
+            ['OIMK01','bagno',True,],
+            ['OIMK02','teren podmokły',True,],
+            ['OISZ01','szuwary',True,],]
 
         self.data_final = self.data
 
@@ -366,7 +366,7 @@ class BdotDowloaderDialog(QtWidgets.QDialog, FORM_CLASS):
         self.tableWidget.setRowCount(len(self.data))
 
         #Column count
-        self.tableWidget.setColumnCount(len(self.data[0]))
+        self.tableWidget.setColumnCount(len(self.data[0])+1)
 
         # for j in range(0, len(self.naglowki)):
         #     self.tableWidget.setHorizontalHeaderItem(j, QtWidgets.QTableWidgetItem(self.naglowki[j]))
@@ -377,9 +377,13 @@ class BdotDowloaderDialog(QtWidgets.QDialog, FORM_CLASS):
             self.checkb1 = QtWidgets.QCheckBox()
             self.checkb1.setChecked(self.data[i][2])#self.data[i][j])
             self.tableWidget.setCellWidget(i,2, self.checkb1)
+            self.lineedit1 = QtWidgets.QLineEdit(self.data[i][0])
+            self.tableWidget.setCellWidget(i,3, self.lineedit1)
 
     def get_menu_status(self):
+        self.data_final = self.data
         for row_number in range(0, len(self.data)):
             self.data_final[row_number][0] = self.tableWidget.item(row_number, 0).text()
             self.data_final[row_number][2] = self.tableWidget.cellWidget(row_number, 2).isChecked()
+            self.data_final[row_number].append(self.tableWidget.cellWidget(row_number, 3).text())
         return self.data_final

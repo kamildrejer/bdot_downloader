@@ -225,9 +225,11 @@ class BdotDowloader:
         # print(self.dir_name)
 
         for item in os.listdir(self.dir_name): # loop through items in dir
-            if item.endswith(self.endswith): # check for ".zip" extension
-                # print(item)
-                self.lista_warstw.append(item)
+            for end in self.endswith:
+                if item.endswith(end): # check for ".zip" extension
+                    # print(item)
+                    self.lista_warstw.append(item)
+                    print(item)
         return self.lista_warstw
 
     def zlacz(self, dir_name, layers, warstwa, context, czy_ucinac_kolumny, lista_kodow_str):#, model_feedback):
@@ -251,7 +253,7 @@ class BdotDowloader:
                 }
                 outputs['ZachowajPola'] = processing.run('native:retainfields', alg_params, context=context, is_child_algorithm=True)
                 results.append(outputs['ZachowajPola']['OUTPUT'] )
-                print(results)
+                #print(results)
         else:
             results = layers
 
@@ -270,7 +272,7 @@ class BdotDowloader:
         alg_params = {
             'EXPRESSION': lista_kodow_str,
             'INPUT': outputs['ZczWarstwyWektorowe']['OUTPUT'], #'G:/Dyski współdzielone/1133_[STEŚ]_Maków Mazowiecki/09_Powietrze/Izolinie/olow_rok.shp',
-            'OUTPUT': 'ogr:dbname=\'C:/Users/klamo/Downloads/proba_bdot/warstwyBDOT10kv3.gpkg\' table="{}" (geom)'.format(self.warstwa.replace('.shp',''   )),
+            'OUTPUT': 'ogr:dbname=\'C:/Users/klamo/Downloads/proba_bdot/warstwyBDOT10k_pre.gpkg\' table="{}" (geom)'.format(self.warstwa.replace('.shp',''   )),
         }
         outputs['WyodrbnijZaPomocWyraenia'] = processing.run('native:extractbyexpression', alg_params, context=context, is_child_algorithm=True)
 
@@ -289,6 +291,46 @@ class BdotDowloader:
     #     outputs['WyodrbnijZaPomocWyraenia'] = processing.run('native:extractbyexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
     #     results['Wynik'] = outputs['WyodrbnijZaPomocWyraenia']['OUTPUT']
 
+    def make_input(self):
+        self.lista_warstw_wyjsciowych = set()
+        self.lista_warstw_wejsciowych = []
+        lista_warstw_do_laczenia_all = ['ADJA_A.shp','ADMS_A.shp','ADMS_P.shp','BUBD_A.shp','BUCM_A.shp','BUHD_A.shp','BUHD_L.shp','BUIB_A.shp','BUIB_L.shp','BUIN_L.shp','BUIT_A.shp','BUIT_P.shp','BUSP_A.shp','BUSP_L.shp','BUTR_L.shp','BUTR_P.shp','BUUO_L.shp','BUWT_P.shp','BUZM_L.shp','BUZT_A.shp','BUZT_P.shp','KUHU_A.shp','KUHU_P.shp','KUIK_A.shp','KUKO_A.shp','KUKO_P.shp','KUMN_A.shp','KUOS_A.shp','KUOZ_A.shp','KUPG_A.shp','KUPG_P.shp','KUSC_A.shp','KUSK_A.shp','KUZA_A.shp','OIKM_P.shp','OIMK_A.shp','OIOR_A.shp','OIOR_L.shp','OIOR_P.shp','OIPR_L.shp','OIPR_P.shp','OISZ_A.shp','PTGN_A.shp','PTKM_A.shp','PTLZ_A.shp','PTNZ_A.shp','PTPL_A.shp','PTRK_A.shp','PTSO_A.shp','PTTR_A.shp','PTUT_A.shp','PTWP_A.shp','PTWZ_A.shp','PTZB_A.shp','SKDR_L.shp','SKJZ_L.shp','SKRP_L.shp','SKRW_P.shp','SKTR_L.shp','SULN_L.shp','SUPR_L.shp','SWKN_L.shp','SWRM_L.shp','SWRS_L.shp','TCON_A.shp','TCRZ_A.shp','ADJA_A.shp','ADMS_A.shp','ADMS_P.shp','BUBD_A.shp','BUCM_A.shp','BUHD_L.shp','BUIB_A.shp']
+        self.lista_warstw_do_laczenia  = []
+        #self.lista_kodow = []
+        self.lista_kodow_str = []
+        element_menu = self.dlg.get_menu_status()
+        for wiersz in element_menu:
+            self.lista_warstw_wyjsciowych.add(wiersz[3]) #dodaj unikalne warstwy wyj.
+        i=0
+        for warstwa in self.lista_warstw_wyjsciowych: 
+            self.lista_warstw_wejsciowych.append({'warstwy':[], 'lista_kodow_str' : '', 'wyjscie':''})
+            self.lista_kodow_str.append('')
+            for wiersz in element_menu:
+                if warstwa == wiersz[3] and wiersz[2] == True:      
+                    self.lista_warstw_wejsciowych[i]['warstwy'].append(wiersz[0])
+                    self.lista_warstw_wejsciowych[i]['wyjscie'] = warstwa
+                    if len(self.lista_warstw_wejsciowych[i]['lista_kodow_str']) == 0:
+                        self.lista_warstw_wejsciowych[i]['lista_kodow_str'] += '\"X_KOD\"=' + "\'{}\'".format(wiersz[0])
+                    else:
+                        self.lista_warstw_wejsciowych[i]['lista_kodow_str'] += ' OR \"X_KOD\"=' + "\'{}\'".format(wiersz[0])
+                #print(self.lista_kodow_str[i])
+            i+=1
+        i = 0
+
+        for warstwy_wejsciowe in self.lista_warstw_wejsciowych:
+            if len(warstwy_wejsciowe['warstwy'])>0:
+                #print('warstwa wejsciowa: ' +str(warstwy_wejsciowe['warstwa']))
+                #print(len(warstwy_wejsciowe['warstwa']))
+                self.lista_warstw_do_laczenia.append({'warstwy' : set(), 'wyjsciowa' : warstwy_wejsciowe['wyjscie'], 'lista_kodow_str':warstwy_wejsciowe['lista_kodow_str']} )###########
+                for warstwa_wejsciowa in warstwy_wejsciowe['warstwy']:
+                    for warstwa_do_laczenia in lista_warstw_do_laczenia_all:
+                        
+                        if warstwa_wejsciowa[0:4] in warstwa_do_laczenia:                          
+                            self.lista_warstw_do_laczenia[i]['warstwy'].add(warstwa_do_laczenia)
+                if len(self.lista_warstw_do_laczenia[i]['warstwy']) == 0:
+                    print(str(warstwa_wejsciowa[0:4]))
+                i+=1
+        print(self.lista_warstw_do_laczenia)
     def run(self):
         """Run method that performs all the real work"""
 
@@ -304,17 +346,35 @@ class BdotDowloader:
         result = self.dlg.exec_()
         # See if OK was pressed
         if result:
-            lista_kodow = []
-            lista_kodow_str = ''
-            lista_menu = self.dlg.get_menu_status()
-            for element_menu in lista_menu:
-                if element_menu[2] == True:
-                    lista_kodow.append(element_menu[0])
-                    if len(lista_kodow_str) == 0:
-                        lista_kodow_str += '\"X_KOD\"=' + "\'{}\'".format(element_menu[0])
-                    else:
-                        lista_kodow_str += ' OR \"X_KOD\"=' + "\'{}\'".format(element_menu[0])
-            print(lista_kodow_str)
+            self.make_input()
+            dir_name = 'Z:\\001-Dzialki_dla_OZE\\01_dane_wejsciowe\\Polska'
+            dest = 'C:\\Users\\klamo\\Downloads\\Polska'
+
+            # self.pakuj(dir_name, dest)
+            # print(self.unpack_files)
+            a=0
+            for warstwy in self.lista_warstw_do_laczenia:
+                a+=1
+                print(warstwy)
+                #context = QgsProcessingContext()
+                lista = self.zrob_liste(dir_name, warstwy['warstwy'])
+                print(lista)
+                #print('lista: '+ str(lista))
+                #print('warstwy: '+ str(warstwy))
+                #self.zlacz(dir_name, lista, warstwy, context, False, self.lista_kodow_str[a])
+
+
+            #lista_kodow = []
+            #lista_kodow_str = ''
+            #lista_menu = self.dlg.get_menu_status()
+            #for element_menu in lista_menu:
+            #    if element_menu[2] == True:
+            #        lista_kodow.append(element_menu[0])
+            #        if len(lista_kodow_str) == 0:
+            #            lista_kodow_str += '\"X_KOD\"=' + "\'{}\'".format(element_menu[0])
+            #        else:
+            #            lista_kodow_str += ' OR \"X_KOD\"=' + "\'{}\'".format(element_menu[0])
+            #print(lista_kodow_str)
             # checkBoxList = ['2475','2412','2466','2468','0402','0463','0416','2411','2403','1607','0261','0225','1422','1461','3025','3006','2262','3263','0207','1008','1661','2815','2471','1429','2609','1807','2006','1815','1410','1418','1425','1427','1404','1405','0611','0618','0662','1202','1261','1020','0807','1810','1601','3018','1463','1438','3016','3013','1464','3063','3009','2062','3022','3023','2206','2613','3214','0264','2806','2810','0203','3202','2462','0226','0223','0213','0211','0408','0419','0411','0410','2801','2417','2011','1805','1602','1210','1063','0810','2261','1061','1010','2213','3062','3064','3010','0464','1863','3210','1813','1862','1432','0619','0663','1201','1263','0812','0803','3015','3028','2003','2012','2212','2607','2610','2205','2404','2474','2861','3206','2416','2463','2469','0201','0265','0413','2005','1203','3262','2211','1013','1005','1015','2807','0861','1416','1430','0407','1816','2007','0406','1818','1864','1420','1426','1403','1409','0604','0607','0610','0612','0616','0664','1206','1018','0811','1606','3002','1462','2004','2611','2605','2804','2811','2812','2472','3201','2406','2405','2407','2461','0262','0222','0415','2415','1821','1801','1610','0224','1411','2410','2818','0219','1007','2264','2203','3017','3061','1413','0801','0409','1812','1820','1414','1421','1401','1435','0602','0603','0613','0617','1002','1006','1806','1608','1611','3031','2063','3011','3005','3024','2661','2805','0202','2214','3208','3261','2409','0214','0217','0417','2808','2002','2001','0221','0208','2477','2473','3212','1861','0862','0809','1819','1412','1436','1437','0609','1214','1219','1014','1021','0806','0808','1808','1809','3001','3014','1604','2602','3004','2603','3007','2010','2204','2817','3218','2414','3211','0216','2467','1217','1211','0212','1408','2813','1016','2014','2401','3207','1423','0206','0805','1216','1406','0608','0614','0615','0661','1262','3019','2013','2601','3026','3008','3027','2606','2263','2608','3209','2402','2819','0204','2216','2207','2465','2470','0405','0401','3020','2009','1817','1215','1434','2408','3204','1609','3217','3203','2202','2413','2208','2201','1402','3205','3021','0802','0414','1803','1419','1424','1428','0601','0606','0620','1001','1003','1004','1009','1012','1019','0804','1804','1811','1465','1605','2008','2604','3030','3003','2209','2809','2814','3213','2803','2464','0220','0403','0215','0218','0209','0461','0462','0412','1205','0210','1218','1415','2479','2210','0205','1433','2215','2612','0418','1204','0404','1814','1417','1407','0605','1207','1208','1209','1212','1213','1062','1011','1017','1802','1603','3012','2061','3029','3215','3216','2816','2476','2478','2862','2802']
             # # Do something useful here - delete the line containing pass and
             # substitute with your code.
@@ -327,12 +387,9 @@ class BdotDowloader:
             #     iface=self.iface
             #)
 
-            dir_name = 'C:\\Users\\klamo\\Downloads\\Polska'
-            dest = 'C:\\Users\\klamo\\Downloads\\Polska'
 
-            # self.pakuj(dir_name, dest)
-            # print(self.unpack_files)
-            for warstwa in ['SWRM_L.shp', 'SULN_L.shp','SUPR_L.shp','KUPG_A.shp','KUHU_A.shp','SKDR_L.shp','OIMK_A.shp','PTLZ_A.shp', 'BUBD_A.shp']:
+            
+            #['SWRM_L.shp', 'SULN_L.shp','SUPR_L.shp','KUPG_A.shp','KUHU_A.shp','SKDR_L.shp','OIMK_A.shp','PTLZ_A.shp', 'BUBD_A.shp']:
 
             # zagospodarowanie ['PTGN_A.shp','PTKM_A.shp','PTLZ_A.shp','PTNZ_A.shp','PTPL_A.shp','PTRK_A.shp','PTSO_A.shp','PTTR_A.shp','PTUT_A.shp','PTWP_A.shp','PTWZ_A.shp','PTZB_A.shp']: #pokrycie
 
@@ -344,12 +401,4 @@ class BdotDowloader:
 
             #kompleksy []
 
-            #pelne  ['ADJA_A.shp','ADMS_A.shp','ADMS_P.shp','BUBD_A.shp','BUCM_A.shp','BUHD_A.shp','BUHD_L.shp','BUIB_A.shp','BUIB_L.shp','BUIN_L.shp','BUIT_A.shp','BUIT_P.shp','BUSP_A.shp','BUSP_L.shp','BUTR_L.shp','BUTR_P.shp','BUUO_L.shp','BUWT_P.shp','BUZM_L.shp','BUZT_A.shp','BUZT_P.shp','KUHU_A.shp','KUHU_P.shp','KUIK_A.shp','KUKO_A.shp','KUKO_P.shp','KUMN_A.shp','KUOS_A.shp','KUOZ_A.shp','KUPG_A.shp','KUPG_P.shp','KUSC_A.shp','KUSK_A.shp','KUZA_A.shp','OIKM_P.shp','OIMK_A.shp','OIOR_A.shp','OIOR_L.shp','OIOR_P.shp','OIPR_L.shp','OIPR_P.shp','OISZ_A.shp','PTGN_A.shp','PTKM_A.shp','PTLZ_A.shp','PTNZ_A.shp','PTPL_A.shp','PTRK_A.shp','PTSO_A.shp','PTTR_A.shp','PTUT_A.shp','PTWP_A.shp','PTWZ_A.shp','PTZB_A.shp','SKDR_L.shp','SKJZ_L.shp','SKRP_L.shp','SKRW_P.shp','SKTR_L.shp','SULN_L.shp','SUPR_L.shp','SWKN_L.shp','SWRM_L.shp','SWRS_L.shp','TCON_A.shp','TCRZ_A.shp','ADJA_A.shp','ADMS_A.shp','ADMS_P.shp','BUBD_A.shp','BUCM_A.shp','BUHD_L.shp','BUIB_A.shp']:
 
-                # pass
-                print(warstwa)
-                context = QgsProcessingContext()
-                lista = self.zrob_liste(dir_name, warstwa)
-
-
-                self.zlacz(dir_name, lista, warstwa, context, False, lista_kodow_str)
