@@ -229,7 +229,7 @@ class BdotDowloader:
                 if item.endswith(end): # check for ".zip" extension
                     # print(item)
                     self.lista_warstw.append(item)
-                    print(item)
+                    #print(item)
         return self.lista_warstw
 
     def zlacz(self, dir_name, layers, warstwa, context, czy_ucinac_kolumny, lista_kodow_str):#, model_feedback):
@@ -266,6 +266,7 @@ class BdotDowloader:
             'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT, #'ogr:dbname=\'C:/Users/klamo/Downloads/proba_bdot/warstwyBDOT10k.gpkg\' table="{}" (geom)'.format(self.warstwa.replace('.shp',''   )),
             # 'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
         }
+        print(alg_params)
         outputs['ZczWarstwyWektorowe'] = processing.run('native:mergevectorlayers', alg_params, context=context, is_child_algorithm=True)
         # results['Wynik'] = self.outputs['ZczWarstwyWektorowe']['OUTPUT']
 
@@ -321,16 +322,24 @@ class BdotDowloader:
             if len(warstwy_wejsciowe['warstwy'])>0:
                 #print('warstwa wejsciowa: ' +str(warstwy_wejsciowe['warstwa']))
                 #print(len(warstwy_wejsciowe['warstwa']))
-                self.lista_warstw_do_laczenia.append({'warstwy' : set(), 'wyjsciowa' : warstwy_wejsciowe['wyjscie'], 'lista_kodow_str':warstwy_wejsciowe['lista_kodow_str']} )###########
+                self.lista_warstw_do_laczenia.append({'warstwy_L' : set(), 'warstwy_P' : set(), 'warstwy_A' : set(), 'wyjsciowa_L' : '', 'wyjsciowa_P' : '', 'wyjsciowa_A' : '', 'lista_kodow_str':warstwy_wejsciowe['lista_kodow_str']} )###########
                 for warstwa_wejsciowa in warstwy_wejsciowe['warstwy']:
                     for warstwa_do_laczenia in lista_warstw_do_laczenia_all:
                         
-                        if warstwa_wejsciowa[0:4] in warstwa_do_laczenia:                          
-                            self.lista_warstw_do_laczenia[i]['warstwy'].add(warstwa_do_laczenia)
-                if len(self.lista_warstw_do_laczenia[i]['warstwy']) == 0:
-                    print(str(warstwa_wejsciowa[0:4]))
+                        if warstwa_wejsciowa[0:4] in warstwa_do_laczenia: 
+                            if warstwa_do_laczenia[4:6] == '_L':
+                                self.lista_warstw_do_laczenia[i]['warstwy_L'].add(warstwa_do_laczenia)
+                                self.lista_warstw_do_laczenia[i]['wyjsciowa_L'] = 'L_'+warstwy_wejsciowe['wyjscie']
+                            if warstwa_do_laczenia[4:6] == '_P':
+                                self.lista_warstw_do_laczenia[i]['warstwy_P'].add(warstwa_do_laczenia)
+                                self.lista_warstw_do_laczenia[i]['wyjsciowa_P'] = 'P_'+warstwy_wejsciowe['wyjscie']
+                            if warstwa_do_laczenia[4:6] == '_A':
+                                self.lista_warstw_do_laczenia[i]['warstwy_A'].add(warstwa_do_laczenia)
+                                self.lista_warstw_do_laczenia[i]['wyjsciowa_A'] = 'A_'+warstwy_wejsciowe['wyjscie']
+                #if len(self.lista_warstw_do_laczenia[i]['warstwy']) == 0:
+                    #print(str(warstwa_wejsciowa[0:4]))
                 i+=1
-        print(self.lista_warstw_do_laczenia)
+        #print(self.lista_warstw_do_laczenia)
     def run(self):
         """Run method that performs all the real work"""
 
@@ -347,7 +356,8 @@ class BdotDowloader:
         # See if OK was pressed
         if result:
             self.make_input()
-            dir_name = 'Z:\\001-Dzialki_dla_OZE\\01_dane_wejsciowe\\Polska'
+            #dir_name = 'Z:\\001-Dzialki_dla_OZE\\01_dane_wejsciowe\\Polska'
+            dir_name = 'C:\\Users\\klamo\\Downloads\\Polska'
             dest = 'C:\\Users\\klamo\\Downloads\\Polska'
 
             # self.pakuj(dir_name, dest)
@@ -356,12 +366,19 @@ class BdotDowloader:
             for warstwy in self.lista_warstw_do_laczenia:
                 a+=1
                 print(warstwy)
-                #context = QgsProcessingContext()
-                lista = self.zrob_liste(dir_name, warstwy['warstwy'])
-                print(lista)
+                context = QgsProcessingContext()
+                lista_L = self.zrob_liste(dir_name, warstwy['warstwy_L'])
+                lista_P = self.zrob_liste(dir_name, warstwy['warstwy_P'])
+                lista_A = self.zrob_liste(dir_name, warstwy['warstwy_A'])
+                #print(lista)
                 #print('lista: '+ str(lista))
                 #print('warstwy: '+ str(warstwy))
-                #self.zlacz(dir_name, lista, warstwy, context, False, self.lista_kodow_str[a])
+                #if len(lista_L)>0:
+                #    self.zlacz(dir_name, lista_L, warstwy['wyjsciowa_L'], context, False, warstwy['lista_kodow_str'])
+                if len(lista_P)>0:
+                    self.zlacz(dir_name, lista_P, warstwy['wyjsciowa_P'], context, False, warstwy['lista_kodow_str'])
+                if len(lista_A)>0:
+                    self.zlacz(dir_name, lista_A, warstwy['wyjsciowa_A'], context, False, warstwy['lista_kodow_str'])
 
 
             #lista_kodow = []
