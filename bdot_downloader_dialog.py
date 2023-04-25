@@ -32,7 +32,7 @@ from qgis.gui import QgsSpinBox
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'bdot_downloader_dialog_base.ui'))
-
+    
 
 class BdotDowloaderDialog(QtWidgets.QDialog, FORM_CLASS):
     def __init__(self, parent=None):

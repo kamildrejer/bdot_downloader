@@ -238,6 +238,7 @@ class BdotDowloader:
         # feedback = QgsProcessingMultiStepFeedback(1, model_feedback)
 
         layers = [os.path.join(dir_name, layer) for layer in layers]
+        out = os.path.join(dir_name, 'BTOT10k_wynik')
 
         results = []
         outputs = {}
@@ -273,7 +274,7 @@ class BdotDowloader:
         alg_params = {
             'EXPRESSION': lista_kodow_str,
             'INPUT': outputs['ZczWarstwyWektorowe']['OUTPUT'], #'G:/Dyski współdzielone/1133_[STEŚ]_Maków Mazowiecki/09_Powietrze/Izolinie/olow_rok.shp',
-            'OUTPUT': 'ogr:dbname=\'C:/Users/klamo/Downloads/proba_bdot/warstwyBDOT10k_pre.gpkg\' table="{}" (geom)'.format(self.warstwa.replace('.shp',''   )),
+            'OUTPUT': 'ogr:dbname=\'{wnik}\' table="{table}" (geom)'.format(wynik = out, table = self.warstwa.replace('.shp',''   )),
         }
         outputs['WyodrbnijZaPomocWyraenia'] = processing.run('native:extractbyexpression', alg_params, context=context, is_child_algorithm=True)
 
@@ -303,11 +304,11 @@ class BdotDowloader:
         for wiersz in element_menu:
             self.lista_warstw_wyjsciowych.add(wiersz[3]) #dodaj unikalne warstwy wyj.
         i=0
-        for warstwa in self.lista_warstw_wyjsciowych: 
+        for warstwa in self.lista_warstw_wyjsciowych:
             self.lista_warstw_wejsciowych.append({'warstwy':[], 'lista_kodow_str' : '', 'wyjscie':''})
             self.lista_kodow_str.append('')
             for wiersz in element_menu:
-                if warstwa == wiersz[3] and wiersz[2] == True:      
+                if warstwa == wiersz[3] and wiersz[2] == True:
                     self.lista_warstw_wejsciowych[i]['warstwy'].append(wiersz[0])
                     self.lista_warstw_wejsciowych[i]['wyjscie'] = warstwa
                     if len(self.lista_warstw_wejsciowych[i]['lista_kodow_str']) == 0:
@@ -325,8 +326,8 @@ class BdotDowloader:
                 self.lista_warstw_do_laczenia.append({'warstwy_L' : set(), 'warstwy_P' : set(), 'warstwy_A' : set(), 'wyjsciowa_L' : '', 'wyjsciowa_P' : '', 'wyjsciowa_A' : '', 'lista_kodow_str':warstwy_wejsciowe['lista_kodow_str']} )###########
                 for warstwa_wejsciowa in warstwy_wejsciowe['warstwy']:
                     for warstwa_do_laczenia in lista_warstw_do_laczenia_all:
-                        
-                        if warstwa_wejsciowa[0:4] in warstwa_do_laczenia: 
+
+                        if warstwa_wejsciowa[0:4] in warstwa_do_laczenia:
                             if warstwa_do_laczenia[4:6] == '_L':
                                 self.lista_warstw_do_laczenia[i]['warstwy_L'].add(warstwa_do_laczenia)
                                 self.lista_warstw_do_laczenia[i]['wyjsciowa_L'] = 'L_'+warstwy_wejsciowe['wyjscie']
@@ -357,11 +358,14 @@ class BdotDowloader:
         if result:
             self.make_input()
             #dir_name = 'Z:\\001-Dzialki_dla_OZE\\01_dane_wejsciowe\\Polska'
-            dir_name = 'C:\\Users\\klamo\\Downloads\\Polska'
-            dest = 'C:\\Users\\klamo\\Downloads\\Polska'
+            dir_name = self.dlg.mQgsFileWidget_source.filePath() #'D:\\Polska\\'
+            dest = self.dlg.mQgsFileWidget_destination.filePath() #'D:\\Polska\\'
 
-            # self.pakuj(dir_name, dest)
-            # print(self.unpack_files)
+            if self.dlg.checkBox_rozpakuj.isChecked():
+                self.pakuj(dir_name, dest)
+                print(self.unpack_files)
+                dir_name=dest
+
             a=0
             for warstwy in self.lista_warstw_do_laczenia:
                 a+=1
@@ -379,6 +383,8 @@ class BdotDowloader:
                     self.zlacz(dir_name, lista_P, warstwy['wyjsciowa_P'], context, False, warstwy['lista_kodow_str'])
                 if len(lista_A)>0:
                     self.zlacz(dir_name, lista_A, warstwy['wyjsciowa_A'], context, False, warstwy['lista_kodow_str'])
+                if len(lista_L)>0:
+                    self.zlacz(dir_name, lista_L, warstwy['wyjsciowa_L'], context, False, warstwy['lista_kodow_str'])
 
 
             #lista_kodow = []
@@ -405,7 +411,7 @@ class BdotDowloader:
             #)
 
 
-            
+
             #['SWRM_L.shp', 'SULN_L.shp','SUPR_L.shp','KUPG_A.shp','KUHU_A.shp','SKDR_L.shp','OIMK_A.shp','PTLZ_A.shp', 'BUBD_A.shp']:
 
             # zagospodarowanie ['PTGN_A.shp','PTKM_A.shp','PTLZ_A.shp','PTNZ_A.shp','PTPL_A.shp','PTRK_A.shp','PTSO_A.shp','PTTR_A.shp','PTUT_A.shp','PTWP_A.shp','PTWZ_A.shp','PTZB_A.shp']: #pokrycie
@@ -417,5 +423,3 @@ class BdotDowloader:
             #pokrycie ['PTGN_A.shp','PTKM_A.shp','PTLZ_A.shp','PTNZ_A.shp','PTPL_A.shp','PTRK_A.shp','PTSO_A.shp','PTTR_A.shp','PTUT_A.shp','PTWP_A.shp','PTWZ_A.shp','PTZB_A.shp']:
 
             #kompleksy []
-
-
